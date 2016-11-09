@@ -143,6 +143,7 @@ public class Animation implements Serializable, Cloneable {
 		else
 			this.animation = SplitImage(this.bufferedImageAnimation, this.numOfFrames, this.framesAcross,
 					this.framesDown, this.frameWidth, this.frameHeight);
+
 	}
 
 	/**
@@ -343,11 +344,11 @@ public class Animation implements Serializable, Cloneable {
 	 */
 	@Override
 	protected Animation clone() {
-		try {
-			return (Animation) super.clone();
-		} catch (CloneNotSupportedException e) {
-			System.out.println("Problem Cloning Animation. Should never see this error");
-		}
+			try {
+				return (Animation) super.clone();
+			} catch (CloneNotSupportedException e) {
+				e.printStackTrace();
+			}
 		return null;
 	}
 }
