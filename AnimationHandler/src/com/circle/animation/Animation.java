@@ -231,13 +231,11 @@ public class Animation implements Serializable, Cloneable {
 	private BufferedImage[] SplitImage(BufferedImage src, int frames, int framesAcross, int framesDown, int frameW,
 			int frameH) {
 		BufferedImage[] dest = new BufferedImage[frames + 1];
-		Graphics2D g2 = null;
-		for (int i = 0; i <= frames; i++)
-			dest[i] = new BufferedImage(frameW, frameH, BufferedImage.TYPE_INT_ARGB);
-		for (int y = 0, i = 0; y > -(framesDown * frameH); y -= frameH) {
-			for (int x = 0; x > -(framesAcross * frameW); x -= frameW, i++) {
-				g2 = dest[i].createGraphics();
-				g2.drawImage(src, x, y, null);
+		for (int y = 0, i = 0; y < framesDown * frameH; y += frameH) {
+			for (int x = 0; x < framesAcross * frameW; x += frameW, i++) {
+				dest[i] = new BufferedImage(frameW, frameH, BufferedImage.TYPE_INT_ARGB);
+				Graphics2D g2 = dest[i].createGraphics();
+				g2.drawImage(src, -x, -y, null);
 				g2.dispose();
 			}
 		}
