@@ -71,7 +71,8 @@ public class BufferByte implements Serializable {
 	}
 
 	/**
-	 * Gets the BufferedImage from byte array
+	 * Gets the BufferedImage from byte array. Used for initialization of
+	 * FrameBuffer
 	 * 
 	 * @return The converted BufferImage
 	 */

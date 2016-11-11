@@ -67,57 +67,27 @@ public class Animation implements Serializable, Cloneable {
 	private int framesAcross;
 	// Frames in each Column
 	private int framesDown;
-	// Format type of Animation (Sprite Sheet or Strip)
-	private boolean spriteSheet = false;
 
 	/**
-	 * Creates a new Animation using the Strip animation format. This assumes
-	 * that the Animation is all in a single row
+	 * Creates a new Animation using either the Strip format or the Sprite Sheet
+	 * format using only a width and height of each frame
 	 * 
 	 * @param name
 	 *            Name of the Animation
 	 * @param image
-	 *            The BufferedImage that contains every frame of the animation
-	 *            is strip format
-	 * @param numOfFrames
-	 *            Defines how many frames are in the Animation
+	 *            The Image/BufferedImage that contains every frame of the
+	 *            animation
 	 * @param frameWidth
-	 *            Defines the width of each frame of the Animation
-	 */
-	public Animation(String name, Image image, int numOfFrames, int frameWidth) {
-		this(name, image, numOfFrames, numOfFrames, frameWidth, image.getHeight(null), false);
-	}
-
-	/**
-	 * Creates a new Animation using the Sprite Sheet animation format. This
-	 * assumes that the Animation is broken up into separate rows and columns.
-	 * This can also be used for Strip Format Animations
-	 * 
-	 * @param name
-	 *            Name of the Animation
-	 * @param image
-	 *            The BufferedImage that contains every frame of the animation
-	 *            is strip format
-	 * @param numOfFrames
-	 *            Defines how many frames are in the Animation
-	 * @param framesAcross
-	 *            Number of frames in each Row
-	 * @param frameWidth
-	 *            Defines the width of each frame of the Animation
+	 *            The Width of each frame of the Animation
 	 * @param frameHeight
-	 *            Defines the height of each frame of the Animation
-	 * @param spriteSheet
-	 *            Defines if the Animation type is Sprite Sheet. Setting to
-	 *            false will load as Strip Format
+	 *            The Height of each frame of the Animation
 	 */
-	public Animation(String name, Image image, int numOfFrames, int framesAcross, int frameWidth, int frameHeight,
-			boolean spriteSheet) {
+	public Animation(String name, Image image, int frameWidth, int frameHeight) {
 		this.name = name;
-		frameSize = new Dimension(frameWidth, frameHeight);
-		this.numOfFrames = numOfFrames;
-		this.framesAcross = framesAcross;
-		this.framesDown = numOfFrames / framesAcross;
-		this.spriteSheet = spriteSheet;
+		this.framesAcross = image.getWidth(null) / frameWidth;
+		this.framesDown = image.getHeight(null) / frameHeight;
+		this.frameSize = new Dimension(frameWidth, frameHeight);
+		this.numOfFrames = this.framesAcross * this.framesDown;
 		setup(image);
 	}
 
@@ -152,12 +122,8 @@ public class Animation implements Serializable, Cloneable {
 	 */
 	public void init() {
 		this.bufferedImageAnimation = this.byteAnimation.getImage();
-		if (!spriteSheet)
-			this.animation = new FrameBuffer(this.bufferedImageAnimation, this.numOfFrames, this.numOfFrames, 1,
-					this.frameSize);
-		else
-			this.animation = new FrameBuffer(this.bufferedImageAnimation, this.numOfFrames, this.framesAcross,
-					this.framesDown, this.frameSize);
+		this.animation = new FrameBuffer(this.bufferedImageAnimation, this.numOfFrames, this.framesAcross,
+				this.framesDown, this.frameSize);
 	}
 
 	/**

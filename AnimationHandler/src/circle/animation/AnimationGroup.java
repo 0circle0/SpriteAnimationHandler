@@ -89,11 +89,15 @@ public class AnimationGroup implements Serializable {
 	 * @see AnimationGroup#overwriteUsable(String, Animation)
 	 */
 	public boolean injectNewUsable(String name, Animation animation) {
-		if (!usableAnimationGroup.contains(name)) {
-			usableAnimationGroup.put(name, animation);
-			return true;
+		if (usableAnimationGroup.containsKey(name)) {
+			/*
+			 * Name already in use. We don't want to overwrite an Animation that
+			 * already exists.
+			 */
+			return false;
 		}
-		return false;
+		usableAnimationGroup.put(name, animation);
+		return true;
 	}
 
 	/**
