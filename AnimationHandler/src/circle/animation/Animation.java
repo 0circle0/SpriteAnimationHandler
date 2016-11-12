@@ -32,7 +32,6 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
 
-import circle.animation.internal.BufferByte;
 import circle.animation.internal.FrameBuffer;
 import circle.animation.internal.Position;
 
@@ -48,11 +47,9 @@ public class Animation implements Serializable, Cloneable {
 	// Contains entire image of all frames
 	private transient BufferedImage bufferedImageAnimation;
 	// Array containing each frame of the Animation
-	private transient FrameBuffer animation;
+	private FrameBuffer animation;
 	// Defines if Animation loops or runs once
-	public transient boolean persistent;
-	// Contains the byte[] information of bufferedImageAnimation used in saving
-	private BufferByte byteAnimation;
+	public transient boolean loop;
 	// Total number of frames for the Animation
 	public int numOfFrames;
 	// Width and Height of each frame
@@ -60,13 +57,9 @@ public class Animation implements Serializable, Cloneable {
 	// Name of the Animation
 	public String name;
 	// X, Y position of the Animation on the screen
-	private Position pos;
+	private Position position;
 	// Current frame the Animation is on
 	private int currentFrame;
-	// Frames in each Row
-	private int framesAcross;
-	// Frames in each Column
-	private int framesDown;
 
 	/**
 	 * Creates a new Animation using either the Strip format or the Sprite Sheet
@@ -84,19 +77,12 @@ public class Animation implements Serializable, Cloneable {
 	 */
 	public Animation(String name, Image image, int frameWidth, int frameHeight) {
 		this.name = name;
-		this.framesAcross = image.getWidth(null) / frameWidth;
-		this.framesDown = image.getHeight(null) / frameHeight;
 		this.frameSize = new Dimension(frameWidth, frameHeight);
-		this.numOfFrames = this.framesAcross * this.framesDown;
-		setup(image);
-	}
-
-	/**
-	 * Converts the Image to BufferedImage and to a byte array for Serialization
-	 */
-	private void setup(Image image) {
+		int framesAcross = image.getWidth(null) / frameWidth;
+		int framesDown = image.getHeight(null) / frameHeight;
+		this.numOfFrames = framesAcross * framesDown;
 		this.bufferedImageAnimation = imageToBufferedImage(image);
-		this.byteAnimation = new BufferByte(this.bufferedImageAnimation);
+		this.animation = new FrameBuffer(this.bufferedImageAnimation, this.frameSize);
 	}
 
 	/**
@@ -121,9 +107,7 @@ public class Animation implements Serializable, Cloneable {
 	 * Initialize Animation. This must be called before using animation.
 	 */
 	public void init() {
-		this.bufferedImageAnimation = this.byteAnimation.getImage();
-		this.animation = new FrameBuffer(this.bufferedImageAnimation, this.numOfFrames, this.framesAcross,
-				this.framesDown, this.frameSize);
+		this.animation.init();
 	}
 
 	/**
@@ -133,7 +117,7 @@ public class Animation implements Serializable, Cloneable {
 	 *            The frame you would like to get.
 	 * @return BufferedImage from Animation as specified by frame
 	 */
-	public BufferedImage getFrame(int frame) throws ArrayIndexOutOfBoundsException {
+	public BufferedImage getFrameImage(int frame) {
 		return this.animation.frameBuffer[frame];
 	}
 
@@ -163,7 +147,7 @@ public class Animation implements Serializable, Cloneable {
 	 *            x, y position of the Animation on the screen
 	 */
 	public void setPos(Position pos) {
-		this.pos = pos;
+		this.position = pos;
 	}
 
 	/**
@@ -173,7 +157,7 @@ public class Animation implements Serializable, Cloneable {
 	 *            x location to assign to the Animation
 	 */
 	public void setPosX(int x) {
-		this.pos.x = x;
+		this.position.x = x;
 	}
 
 	/**
@@ -183,7 +167,7 @@ public class Animation implements Serializable, Cloneable {
 	 *            y location to assign to the Animation
 	 */
 	public void setPosY(int y) {
-		this.pos.y = y;
+		this.position.y = y;
 	}
 
 	/**
@@ -192,7 +176,7 @@ public class Animation implements Serializable, Cloneable {
 	 * @return x, y position of the Animation on the screen
 	 */
 	public Position getPos() {
-		return this.pos;
+		return this.position;
 	}
 
 	/**
@@ -201,7 +185,7 @@ public class Animation implements Serializable, Cloneable {
 	 * @return y position
 	 */
 	public int getPosX() {
-		return this.pos.x;
+		return this.position.x;
 	}
 
 	/**
@@ -210,7 +194,7 @@ public class Animation implements Serializable, Cloneable {
 	 * @return y position
 	 */
 	public int getPosY() {
-		return this.pos.y;
+		return this.position.y;
 	}
 
 	/**

@@ -28,30 +28,59 @@ package circle.animation.internal;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
+
+import javax.swing.ImageIcon;
 
 /**
  * FrameBuffer contains the individual frames of a BufferedImage
  */
-public class FrameBuffer {
+public class FrameBuffer implements Serializable {
+	private static final long serialVersionUID = -8674065405735141416L;
 	public transient BufferedImage[] frameBuffer;
+	private ImageIcon imageIcon;
+	private Dimension frameSize;
 
 	/**
 	 * Initialized the BufferedImage array with given parameters
 	 * 
 	 * @param src
 	 *            Image to convert to individual frames
-	 * @param frames
-	 *            Number of frames inside the image
-	 * @param framesAcross
-	 *            Number of frames in each Row
-	 * @param framesDown
-	 *            Number of frames in each Column
 	 * @param frameSize
 	 *            Width and Height of each frame
 	 */
-	public FrameBuffer(BufferedImage src, int frames, int framesAcross, int framesDown, Dimension frameSize) {
-		frameBuffer = SplitImage(src, frames, framesAcross, framesDown, frameSize);
+	public FrameBuffer(BufferedImage src, Dimension frameSize) {
+		imageIcon = new ImageIcon(src);
+		this.frameSize = frameSize;
+		frameBuffer = SplitImage(src, this.frameSize);
+	}
+
+	/**
+	 * Initializes this FrameBuffer. This must be called before using the
+	 * FrameBuffer. init() is called when creating the object so it is not
+	 * necessary to call after creating a new FrameBuffer
+	 */
+	public void init() {
+		frameBuffer = SplitImage(buffer(this.imageIcon), this.frameSize);
+	}
+
+	/**
+	 * Converts ImageIcon to BufferedImage
+	 * 
+	 * @param imageIcon
+	 *            ImageIcon to be converted to BufferedImage
+	 * @return The BufferedImage created in the converstion
+	 */
+	private BufferedImage buffer(ImageIcon imageIcon) {
+		Image image = imageIcon.getImage();
+		BufferedImage dest = new BufferedImage(image.getWidth(null), image.getHeight(null),
+				BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = dest.createGraphics();
+		g2.drawImage(image, 0, 0, null);
+		g2.dispose();
+		return dest;
 	}
 
 	/**
@@ -60,29 +89,19 @@ public class FrameBuffer {
 	 * 
 	 * @param src
 	 *            The source image containing all the frames to be split
-	 * @param frames
-	 *            The number of frames contained in the src
-	 * @param framesAcross
-	 *            number of frames in each Row
-	 * @param framesDown
-	 *            number of frames in each Column
-	 * @param frameW
-	 *            The width of each frame
-	 * @param frameH
-	 *            The height of each frame
+	 * @param frameSize
+	 *            Dimension of the Width and Height of each frame
 	 * @return BufferedImage array containing every frame of the animation
 	 */
-	private BufferedImage[] SplitImage(BufferedImage src, int frames, int framesAcross, int framesDown,
-			Dimension frameSize) {
-		BufferedImage[] dest = new BufferedImage[frames + 1];
-		for (int y = 0, i = 0; y < framesDown * frameSize.height; y += frameSize.height) {
-			for (int x = 0; x < framesAcross * frameSize.width; x += frameSize.width, i++) {
-				dest[i] = new BufferedImage(frameSize.width, frameSize.height, BufferedImage.TYPE_INT_ARGB);
-				Graphics2D g2 = dest[i].createGraphics();
-				g2.drawImage(src, -x, -y, null);
-				g2.dispose();
-			}
-		}
+	private BufferedImage[] SplitImage(BufferedImage src, Dimension frameSize) {
+		int framesDown = (int) (src.getHeight() / frameSize.getHeight());
+		int framesAcross = (int) (src.getWidth() / frameSize.getWidth());
+		int frames = framesDown * framesAcross;
+		BufferedImage dest[] = new BufferedImage[frames];
+		for (int y = 0, i = 0; y < src.getHeight(); y += frameSize.height)
+			for (int x = 0; x < src.getWidth(); x += frameSize.width, i++)
+				dest[i] = src.getSubimage(x, y, frameSize.width, frameSize.height);
 		return dest;
 	}
+
 }

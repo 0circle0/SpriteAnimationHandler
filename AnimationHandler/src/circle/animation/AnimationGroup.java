@@ -94,6 +94,7 @@ public class AnimationGroup implements Serializable {
 			 * Name already in use. We don't want to overwrite an Animation that
 			 * already exists.
 			 */
+			System.out.println(name + " being added to AnimationGroup is already in use.");
 			return false;
 		}
 		usableAnimationGroup.put(name, animation);
@@ -186,7 +187,7 @@ public class AnimationGroup implements Serializable {
 	 * Changes an Animation being used to either play once or loop
 	 */
 	private void makePersistent(UUID ID, boolean persistent) {
-		this.displayGroup.get(ID).persistent = persistent;
+		this.displayGroup.get(ID).loop = persistent;
 	}
 
 	/**
@@ -250,7 +251,7 @@ public class AnimationGroup implements Serializable {
 		for (UUID ID : this.displayGroup.keySet()) {
 			int frame = this.displayGroup.get(ID).getCurrentFrame() + 1;
 			if (frame >= this.displayGroup.get(ID).numOfFrames) {
-				if (this.displayGroup.get(ID).persistent) {
+				if (this.displayGroup.get(ID).loop) {
 					this.displayGroup.get(ID).setCurrentFrame(0);
 				} else {
 					remove(ID);
@@ -270,7 +271,7 @@ public class AnimationGroup implements Serializable {
 	 */
 	public synchronized void draw(Graphics2D g2) {
 		for (UUID ID : this.displayGroup.keySet())
-			g2.drawImage(this.displayGroup.get(ID).getFrame(this.displayGroup.get(ID).getCurrentFrame()),
+			g2.drawImage(this.displayGroup.get(ID).getFrameImage(this.displayGroup.get(ID).getCurrentFrame()),
 					this.displayGroup.get(ID).getPosX(), this.displayGroup.get(ID).getPosY(), null);
 	}
 }

@@ -27,9 +27,7 @@
 package circle.animation.internal;
 
 public class Position {
-	// x position on the screen
 	public int x;
-	// y position on the screen
 	public int y;
 
 	/**

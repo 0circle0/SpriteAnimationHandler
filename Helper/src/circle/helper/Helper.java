@@ -24,10 +24,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package com.circle.helper;
+package circle.helper;
 
 import java.awt.AlphaComposite;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MediaTracker;
@@ -145,59 +146,39 @@ public class Helper {
 	}
 
 	/**
-	 * Splits an image into individual frames from a strip format
-	 * 
-	 * @param src
-	 *            Image containing all frames of an image
-	 * @param frames
-	 *            Number of frames in the image
-	 * @param frameW
-	 *            Width of each frame
-	 * @param frameH
-	 *            Height of each frame
-	 * @return Array of all the frames as BufferedImage
-	 */
-	public BufferedImage[] SplitImage(Image src, int frames, int frameW, int frameH) {
-		BufferedImage[] dest = new BufferedImage[frames + 1];
-		Graphics2D g2;
-		for (int i = 0; i <= frames; i++) {
-			dest[i] = new BufferedImage(frameW, frameH, BufferedImage.TYPE_INT_ARGB);
-			g2 = dest[i].createGraphics();
-			g2.drawImage(src, -i * frameW, 0, null);
-			g2.dispose();
-		}
-		return dest;
-	}
-
-	/**
-	 * Splits a animation sequence into individual frames from a Sprite Sheet
-	 * Format
+	 * Splits a animation sequence into individual frames from a Sprite Sheet or
+	 * Strip Format
 	 * 
 	 * @param src
 	 *            The source image containing all the frames to be split
-	 * @param frames
-	 *            The number of frames contained in the src
-	 * @param framesAcross
-	 *            number of frames in each Row
-	 * @param framesDown
-	 *            number of frames in each Column
-	 * @param frameW
-	 *            The width of each frame
-	 * @param frameH
-	 *            The height of each frame
+	 * @param frameWidth
+	 *            Width of each frame
+	 * @param frameHeight
+	 *            Height of each frame
 	 * @return BufferedImage array containing every frame of the animation
 	 */
-	public BufferedImage[] SplitImage(BufferedImage src, int frames, int framesAcross, int framesDown, int frameWidth,
-			int frameHeight) {
-		BufferedImage[] dest = new BufferedImage[frames + 1];
-		for (int y = 0, i = 0; y < framesDown * frameHeight; y += frameHeight) {
-			for (int x = 0; x < framesAcross * frameWidth; x += frameWidth, i++) {
-				dest[i] = new BufferedImage(frameWidth, frameHeight, BufferedImage.TYPE_INT_ARGB);
-				Graphics2D g2 = dest[i].createGraphics();
-				g2.drawImage(src, -x, -y, null);
-				g2.dispose();
-			}
-		}
+	public BufferedImage[] SplitImage(BufferedImage src, int frameWidth, int frameHeight) {
+		return SplitImage(src, new Dimension(frameWidth, frameHeight));
+	}
+
+	/**
+	 * Splits a animation sequence into individual frames from a Sprite Sheet or
+	 * Strip Format
+	 * 
+	 * @param src
+	 *            The source image containing all the frames to be split
+	 * @param frameSize
+	 *            Dimension of the Width and Height of each frame
+	 * @return BufferedImage array containing every frame of the animation
+	 */
+	private BufferedImage[] SplitImage(BufferedImage src, Dimension frameSize) {
+		int framesDown = (int) (src.getHeight() / frameSize.getHeight());
+		int framesAcross = (int) (src.getWidth() / frameSize.getWidth());
+		int frames = framesDown * framesAcross;
+		BufferedImage dest[] = new BufferedImage[frames];
+		for (int y = 0, i = 0; y < src.getHeight(); y += frameSize.height)
+			for (int x = 0; x < src.getWidth(); x += frameSize.width, i++)
+				dest[i] = src.getSubimage(x, y, frameSize.width, frameSize.height);
 		return dest;
 	}
 
