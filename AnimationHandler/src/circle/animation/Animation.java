@@ -193,11 +193,6 @@ public class Animation implements Serializable, Cloneable {
 		return this.position.y;
 	}
 
-	public Animation copy() {
-		return new Animation(this.name, this.animation.imageIcon.getImage(), this.frameSize.width,
-				this.frameSize.height);
-	}
-
 	/**
 	 * Creates and returns a copy of this object.
 	 * 
