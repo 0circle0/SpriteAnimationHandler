@@ -48,6 +48,7 @@ public class AnimationGroup implements Serializable {
 	private Hashtable<String, Animation> usableAnimationGroup;
 	// Holds the Animations being used and drawn to the screen
 	private transient ConcurrentHashMap<UUID, Animation> displayGroup;
+	private UUID ID;
 
 	/**
 	 * Creates a new AnimationGroup
@@ -72,6 +73,7 @@ public class AnimationGroup implements Serializable {
 	 */
 	private void setup() {
 		this.displayGroup = new ConcurrentHashMap<UUID, Animation>();
+		ID = UUID.randomUUID();
 	}
 
 	/**
@@ -123,14 +125,24 @@ public class AnimationGroup implements Serializable {
 	 * @param name
 	 *            Name of the Animation you would like to use
 	 * @param pos
-	 *            x,y position of the Animation
+	 *            x, y position of the Animation
 	 * @return UUID generated for accessing elements of the displaying Animation
 	 */
 	public UUID add(String name, Position pos) {
-		UUID ID = UUID.randomUUID();
+		long s = System.nanoTime();
+		ID = UUID.randomUUID();
+//		ID += 1;
+//		while (this.displayGroup.contains(ID)) {
+//			ID += 1;
+//			if (ID > Integer.MAX_VALUE)
+//				ID = 0;
+//		}
+
 		this.displayGroup.put(ID, this.usableAnimationGroup.get(name).clone());
 		this.displayGroup.get(ID).setCurrentFrame(0);
 		this.displayGroup.get(ID).setPos(pos);
+		long e = System.nanoTime();
+		System.out.println(e - s + " , " + ID);
 		return ID;
 	}
 

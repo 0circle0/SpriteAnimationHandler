@@ -36,18 +36,15 @@ import circle.animation.internal.FrameBuffer;
 import circle.animation.internal.Position;
 
 /**
- * Animation contains the information for an animation. Animations created are
- * Serializable
+ * Animation contains the information for an animation.
  * 
  * @author Brian Jensen
  */
 public class Animation implements Serializable, Cloneable {
 
 	private static final long serialVersionUID = -138702520071857680L;
-	// Contains entire image of all frames
-	private transient BufferedImage bufferedImageAnimation;
-	// Array containing each frame of the Animation
-	private FrameBuffer animation;
+	// FrameBuffer containing each frame of the Animation
+	public FrameBuffer animation;
 	// Defines if Animation loops or runs once
 	public transient boolean loop;
 	// Total number of frames for the Animation
@@ -81,8 +78,7 @@ public class Animation implements Serializable, Cloneable {
 		int framesAcross = image.getWidth(null) / frameWidth;
 		int framesDown = image.getHeight(null) / frameHeight;
 		this.numOfFrames = framesAcross * framesDown;
-		this.bufferedImageAnimation = imageToBufferedImage(image);
-		this.animation = new FrameBuffer(this.bufferedImageAnimation, this.frameSize);
+		this.animation = new FrameBuffer(imageToBufferedImage(image), this.frameSize);
 	}
 
 	/**
@@ -195,6 +191,11 @@ public class Animation implements Serializable, Cloneable {
 	 */
 	public int getPosY() {
 		return this.position.y;
+	}
+
+	public Animation copy() {
+		return new Animation(this.name, this.animation.imageIcon.getImage(), this.frameSize.width,
+				this.frameSize.height);
 	}
 
 	/**

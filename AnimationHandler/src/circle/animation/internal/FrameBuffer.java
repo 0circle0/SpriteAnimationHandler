@@ -35,16 +35,20 @@ import java.io.Serializable;
 import javax.swing.ImageIcon;
 
 /**
- * FrameBuffer contains the individual frames of a BufferedImage
+ * FrameBuffer contains the individual frames of a BufferedImage. Implementing
+ * Serialization allows for saving and loading from the file system.
  */
 public class FrameBuffer implements Serializable {
 	private static final long serialVersionUID = -8674065405735141416L;
+	// Contains each frame of the FrameBuffer
 	public transient BufferedImage[] frameBuffer;
-	private ImageIcon imageIcon;
+	// The full Image for Serialization
+	public ImageIcon imageIcon;
+	// Width and Height of each frame
 	private Dimension frameSize;
 
 	/**
-	 * Initialized the BufferedImage array with given parameters
+	 * Initialized the FrameBuffer with the given parameters
 	 * 
 	 * @param src
 	 *            Image to convert to individual frames
@@ -59,8 +63,7 @@ public class FrameBuffer implements Serializable {
 
 	/**
 	 * Initializes this FrameBuffer. This must be called before using the
-	 * FrameBuffer. init() is called when creating the object so it is not
-	 * necessary to call after creating a new FrameBuffer
+	 * FrameBuffer when loading it after Serialization.
 	 */
 	public void init() {
 		frameBuffer = SplitImage(buffer(this.imageIcon), this.frameSize);
@@ -71,7 +74,7 @@ public class FrameBuffer implements Serializable {
 	 * 
 	 * @param imageIcon
 	 *            ImageIcon to be converted to BufferedImage
-	 * @return The BufferedImage created in the converstion
+	 * @return The BufferedImage created in the conversion
 	 */
 	private BufferedImage buffer(ImageIcon imageIcon) {
 		Image image = imageIcon.getImage();
@@ -84,8 +87,7 @@ public class FrameBuffer implements Serializable {
 	}
 
 	/**
-	 * Splits a animation sequence into individual frames from a Sprite Sheet or
-	 * Strip Format
+	 * Splits the FrameBuffer into individual frames.
 	 * 
 	 * @param src
 	 *            The source image containing all the frames to be split
@@ -103,5 +105,4 @@ public class FrameBuffer implements Serializable {
 				dest[i] = src.getSubimage(x, y, frameSize.width, frameSize.height);
 		return dest;
 	}
-
 }
