@@ -29,6 +29,7 @@ package circle.animation;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
 
@@ -57,6 +58,10 @@ public class Animation implements Serializable, Cloneable {
 	private Position position;
 	// Current frame the Animation is on
 	private int currentFrame;
+	public transient double rotation;
+	public transient boolean rotate;
+	public transient double rotationAmount = 0;
+	public transient AffineTransform at = new AffineTransform();
 
 	/**
 	 * Creates a new Animation using either the Strip format or the Sprite Sheet

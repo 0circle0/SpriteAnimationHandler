@@ -42,6 +42,8 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URL;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -77,7 +79,7 @@ public class Helper {
 	 * 
 	 * @param c
 	 *            Component used for tracking image loading
-	 * @param defaultImageLoction
+	 * @param defaultImageLocation
 	 *            Location of loading images from file system
 	 */
 	public Helper(Component c, String defaultImageLocation) {
@@ -253,6 +255,31 @@ public class Helper {
 	}
 
 	/**
+	 * Compresses and saves an Object to the file system
+	 * 
+	 * @param o
+	 *            Object to be saved
+	 * @param file
+	 *            Location and name of the file being saved
+	 * @param compressed
+	 *            true if compressed
+	 */
+	public void saveObject(Object o, String file, boolean compressed) {
+		try {
+			FileOutputStream saveFile = new FileOutputStream(file);
+			GZIPOutputStream gz = null;
+			if (compressed)
+				gz = new GZIPOutputStream(saveFile);
+			ObjectOutputStream save = new ObjectOutputStream(compressed ? gz : saveFile);
+			save.writeObject(o);
+			if (compressed)
+				gz.close();
+			save.close();
+		} catch (IOException e) {
+		}
+	}
+
+	/**
 	 * Saves an Object to the file system
 	 * 
 	 * @param o
@@ -261,13 +288,28 @@ public class Helper {
 	 *            Location and name of the file being saved
 	 */
 	public void saveObject(Object o, String file) {
-		try {
-			FileOutputStream saveFile = new FileOutputStream(file);
-			ObjectOutputStream save = new ObjectOutputStream(saveFile);
-			save.writeObject(o);
-			save.close();
-		} catch (IOException e) {
-		}
+		saveObject(o, file, false);
+	}
+
+	/**
+	 * Compresses and saves a BufferedImage to the file system
+	 * 
+	 * @param i
+	 *            Image to be saved. Can be instance of BufferedImage or Image
+	 * @param filename
+	 *            Location and name to save the image as
+	 * @param compressed
+	 *            true if compressed
+	 */
+	public void saveBufferedImageAs(Image i, String filename, boolean compressed) {
+		BufferedImage bi = null;
+		byte[] by;
+		if (i instanceof Image)
+			bi = toBufferedImage(i);
+		else if (i instanceof BufferedImage)
+			bi = (BufferedImage) i;
+		by = bufferedImageToByteArray(bi);
+		saveObject(by, filename, compressed);
 	}
 
 	/**
@@ -279,14 +321,21 @@ public class Helper {
 	 *            Location and name to save the image as
 	 */
 	public void saveBufferedImageAs(Image i, String filename) {
-		BufferedImage bi = null;
-		byte[] by;
-		if (i instanceof Image)
-			bi = toBufferedImage(i);
-		else if (i instanceof BufferedImage)
-			bi = (BufferedImage) i;
-		by = bufferedImageToByteArray(bi);
-		saveObject(by, filename);
+		saveBufferedImageAs(i, filename, false);
+	}
+
+	/**
+	 * Opens an Object as a BufferedImage that has been compressed
+	 * 
+	 * @param name
+	 *            Location and name of the Object to load
+	 * @param compressed
+	 *            true if compressed
+	 * @return Object converted to BufferedImage
+	 */
+	public BufferedImage openObjectAsBufferedImage(String name, boolean compressed) {
+		byte[] an = (byte[]) openObject(name, compressed);
+		return byteArrayToBufferedImage(an);
 	}
 
 	/**
@@ -297,18 +346,20 @@ public class Helper {
 	 * @return Object converted to BufferedImage
 	 */
 	public BufferedImage openObjectAsBufferedImage(String name) {
-		byte[] an = (byte[]) openObject(name);
-		return byteArrayToBufferedImage(an);
+		return openObjectAsBufferedImage(name, false);
 	}
 
 	/**
-	 * Opens an Object from the file system
+	 * Opens an Object from the file system that has been compressed
 	 * 
 	 * @param fileLocation
 	 *            Name and location of the Object to open
+	 * 
+	 * @param compressed
+	 *            true if Object is compressed
 	 * @return Object loaded from the file system
 	 */
-	public Object openObject(String fileLocation) {
+	public Object openObject(String fileLocation, boolean compressed) {
 		InputStream saveFile = null;
 		Object an = null;
 		try {
@@ -317,9 +368,16 @@ public class Helper {
 			System.out.println("Could not get resource as stream " + fileLocation);
 		}
 		ObjectInputStream restore = null;
-
+		GZIPInputStream gz = null;
+		if (compressed) {
+			try {
+				gz = new GZIPInputStream(saveFile);
+			} catch (IOException e1) {
+				System.out.println("Could not uncompress");
+			}
+		}
 		try {
-			restore = new ObjectInputStream(saveFile);
+			restore = new ObjectInputStream(compressed ? gz : saveFile);
 		} catch (IOException e) {
 			System.out.println("IOException restore");
 		}
@@ -338,5 +396,16 @@ public class Helper {
 			System.out.println("Cannot close restore. Maybe wasn't opened.");
 		}
 		return an;
+	}
+
+	/**
+	 * Opens an Object from the file system
+	 * 
+	 * @param fileLocation
+	 *            Name and location of the Object to open
+	 * @return Object loaded from the file system
+	 */
+	public Object openObject(String fileLocation) {
+		return openObject(fileLocation, false);
 	}
 }

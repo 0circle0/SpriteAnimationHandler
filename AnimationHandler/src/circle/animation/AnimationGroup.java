@@ -27,9 +27,12 @@
 package circle.animation;
 
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,7 +48,7 @@ public class AnimationGroup implements Serializable {
 
 	private static final long serialVersionUID = 8747907961688422176L;
 	// Each Animation Object accessed by its name
-	private Hashtable<String, Animation> usableAnimationGroup;
+	private HashMap<String, Animation> usableAnimationGroup;
 	// Holds the Animations being used and drawn to the screen
 	private transient ConcurrentHashMap<UUID, Animation> displayGroup;
 	private UUID ID;
@@ -54,7 +57,7 @@ public class AnimationGroup implements Serializable {
 	 * Creates a new AnimationGroup
 	 */
 	public AnimationGroup() {
-		this.usableAnimationGroup = new Hashtable<String, Animation>();
+		this.usableAnimationGroup = new HashMap<String, Animation>();
 		setup();
 	}
 
@@ -72,7 +75,7 @@ public class AnimationGroup implements Serializable {
 	 * Creates all the Arrays used by AnimationGroup
 	 */
 	private void setup() {
-		this.displayGroup = new ConcurrentHashMap<UUID, Animation>();
+		this.displayGroup = new ConcurrentHashMap<>();
 		ID = UUID.randomUUID();
 	}
 
@@ -129,11 +132,72 @@ public class AnimationGroup implements Serializable {
 	 * @return UUID generated for accessing elements of the displaying Animation
 	 */
 	public UUID add(String name, Position pos) {
+		return add(name, pos, null, 0);
+	}
+
+	/**
+	 * Adds a new Animation you would like to display on screen with a rotation
+	 * angle and a rotation amount with the option to LOOP
+	 * 
+	 * @param name
+	 *            Name of the Animation you would like to use
+	 * @param pos
+	 *            x, y position of the Animation
+	 * @param angleDeg
+	 *            Angle of rotation -180 - 180
+	 * @param rotationAmount
+	 *            amount to rotate each frame -180 - 180
+	 * @param persistent
+	 *            true to loop false to play once
+	 * @return UUID generated for accessing elements of the displaying Animation
+	 */
+	public UUID add(String name, Position pos, Double angleDeg, double rotationAmount, boolean persistent) {
 		ID = UUID.randomUUID();
-		this.displayGroup.put(ID, this.usableAnimationGroup.get(name).clone());
-		this.displayGroup.get(ID).setCurrentFrame(0);
-		this.displayGroup.get(ID).setPos(pos);
+		Animation anim = this.usableAnimationGroup.get(name).clone();
+		anim.setPos(pos);
+		anim.setCurrentFrame(0);
+		if (angleDeg != null) {
+			anim.rotation = angleDeg;
+			anim.rotate = true;
+			anim.rotationAmount = rotationAmount;
+		}
+		this.displayGroup.put(ID, anim);
+		makePersistent(ID, persistent);
 		return ID;
+	}
+
+	/**
+	 * Adds a new Animation you would like to display on screen with a rotation
+	 * angle and a rotation amount.
+	 * 
+	 * @param name
+	 *            Name of the Animation you would like to use
+	 * @param pos
+	 *            x, y position of the Animation
+	 * @param angleDeg
+	 *            Angle of rotation -180 - 180
+	 * @param rotationAmount
+	 *            amount to rotate each frame -180 - 180
+	 * @return UUID generated for accessing elements of the displaying Animation
+	 */
+	public UUID add(String name, Position pos, Double angleDeg, double rotationAmount) {
+		return add(name, pos, angleDeg, rotationAmount, false);
+	}
+
+	/**
+	 * Adds a new Animation you would like to display on screen with a rotation
+	 * angle with no rotation.
+	 * 
+	 * @param name
+	 *            Name of the Animation you would like to use
+	 * @param pos
+	 *            x, y position of the Animation
+	 * @param angleDeg
+	 *            Angle of rotation -180 - 180
+	 * @return UUID generated for accessing elements of the displaying Animation
+	 */
+	public UUID add(String name, Position pos, double angleDeg) {
+		return add(name, pos, angleDeg, 0, false);
 	}
 
 	/**
@@ -199,7 +263,9 @@ public class AnimationGroup implements Serializable {
 	 *            UUID of the animation to be removed
 	 */
 	public void remove(UUID hashID) {
-		this.displayGroup.remove(hashID);
+		synchronized (this) {
+			this.displayGroup.remove(hashID);
+		}
 	}
 
 	/**
@@ -248,9 +314,12 @@ public class AnimationGroup implements Serializable {
 	 * 
 	 * @return An Array of UUID of all the elements that were removed
 	 */
-	public synchronized ArrayList<UUID> update() {
+	public ArrayList<UUID> update() {
 		ArrayList<UUID> ret = new ArrayList<UUID>();
-		for (UUID ID : this.displayGroup.keySet()) {
+		Iterator<UUID> i = this.displayGroup.keySet().iterator();
+		while (i.hasNext()) {
+			UUID ID = i.next();
+			this.displayGroup.get(ID).rotation += this.displayGroup.get(ID).rotationAmount;
 			int frame = this.displayGroup.get(ID).getCurrentFrame() + 1;
 			if (frame >= this.displayGroup.get(ID).numOfFrames) {
 				if (this.displayGroup.get(ID).loop) {
@@ -271,9 +340,47 @@ public class AnimationGroup implements Serializable {
 	 * @param g2
 	 *            Graphics2D being used to draw Images to the screen
 	 */
-	public synchronized void draw(Graphics2D g2) {
-		for (UUID ID : this.displayGroup.keySet())
-			g2.drawImage(this.displayGroup.get(ID).getFrameImage(this.displayGroup.get(ID).getCurrentFrame()),
-					this.displayGroup.get(ID).getPosX(), this.displayGroup.get(ID).getPosY(), null);
+	public void draw(Graphics2D g2) {
+		synchronized (this) {
+			for (UUID ID : this.displayGroup.keySet()) {
+				if (this.displayGroup.get(ID).rotate) {
+					AffineTransform at = new AffineTransform();
+					BufferedImage temp = this.displayGroup.get(ID)
+							.getFrameImage(this.displayGroup.get(ID).getCurrentFrame());
+					int x = this.displayGroup.get(ID).getPosX();
+					int y = this.displayGroup.get(ID).getPosY();
+					at.translate(x + temp.getWidth() / 2, y + temp.getHeight() / 2);
+					if (this.displayGroup.get(ID).rotate)
+						at.rotate(Math.toRadians(this.displayGroup.get(ID).rotation));
+					at.translate(-temp.getWidth() / 2, -temp.getHeight() / 2);
+					g2.drawImage(temp, at, null);
+				} else {
+					g2.drawImage(this.displayGroup.get(ID).getFrameImage(this.displayGroup.get(ID).getCurrentFrame()),
+							this.displayGroup.get(ID).getPosX(), this.displayGroup.get(ID).getPosY(), null);
+				}
+			}
+		}
+	}
+
+	/**
+	 * @return returns amount of Animations in displayGroup
+	 */
+	public int size() {
+		return this.displayGroup.size();
+	}
+
+	/**
+	 * Gets all the names of the animations available
+	 * 
+	 * @return list of names in a String array
+	 */
+	public String[] getNames() {
+		String[] ret = new String[this.usableAnimationGroup.keySet().size()];
+		int i = 0;
+		for (String s : this.usableAnimationGroup.keySet()) {
+			ret[i] = s;
+			i++;
+		}
+		return ret;
 	}
 }
